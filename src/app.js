@@ -7,9 +7,13 @@ const connectDB= require("./config/database.js");
 const User = require("./models/user.js");
 
 
+app.use(express.json()); // This line says that I am using express json middleware to parse the incoming request body as JSON
 
 
+//This is the route handler for the signup route. It will save the user data to the database .
 app.post("/signup",async(req,res)=>{
+
+    console.log(req.body);
     // const userObj = {
     //     firstName:"Debojyoti",
     //     lastName:"Das",
@@ -17,22 +21,93 @@ app.post("/signup",async(req,res)=>{
     //     password:"debojyoti@123",
     // }
 
-    const user = new User({
-        firstName:"Sachin",
-        lastName:"Tendulkar",
-        emailId:"sachin@tendulkar.com",
-        password:"sachin@123",
-    });
+    // const user = new User({
+    //     firstName:"MS",
+    //     lastName:"Dhoni",
+    //     emailId:"ms@dhoni.com",
+    //     password:"ms@123",
+    // });
+
+    const user = new User(req.body);
 
     try{
         await user.save();
         res.send("User signed up successfully");
 
     }catch(err){
-        res.status(500).send("Error occurred while signing up the user"+err.message);
+        console.log("Error while saving user:", err);
+        res.status(500).send("Error occurred while signing up the user: "+err.message);
 
     }
     
+})
+
+
+//This will give the user data based on the email id provided in the request body
+app.get("/user",async(req,res)=>{
+    const userEmail = req.body.emailId;
+    try{
+        const users = await User.find({emailId:userEmail});
+        if(users.length ===0){
+            return res.status(404).send("User not found")
+        }else{
+            res.send(users);
+
+        }
+        
+    }
+    catch(err){
+        res.status(400).send("Something went wrong")
+    }
+})
+
+
+//This will give the data of all the users in the database
+app.get("/feed",async(req,res) =>{
+    try{
+        const users = await User.find({});
+        res.send(users);
+
+    }catch(err){
+        res.status(400).send("Something went wrong");
+
+    }
+})
+
+
+
+//Now we will see how do we delete a user from the database
+app.delete("/user",async(req,res)=>{
+    const userId = req.body.userId;
+    try{
+        const user = await User.findByIdAndDelete({_id:userId});
+        if(!user){
+            return res.status(404).send("User not found");
+        }else{
+            res.send("User deleted successfully");
+        }
+
+    }
+    catch(err){
+        res.status(400).send("Something went wrong");
+    }
+})
+
+
+
+//Update the data of the user in the database
+app.patch("/user",async(req,res)=>{
+    const userId = req.body.userId;
+    const data = req.body;
+    try{
+       const user= await User.findByIdAndUpdate({_id:userId},data,{returnDocument:"before",runValidators:true,});
+       console.log("User data before update:", user);
+        res.send("User data updated successfully");
+
+    }catch(err){
+        res.status(400).send("Something went wrong:"+ err.message);
+
+    }
 })
 
 
