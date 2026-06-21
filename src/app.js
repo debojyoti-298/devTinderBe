@@ -1,13 +1,24 @@
 const express = require('express');
 const app = express(); // This line says that I am creating a new express js application
 
-const {adminAuth, userAuth} = require ("./middlewares/auth.js");
+// const {adminAuth, userAuth} = require ("./middlewares/auth.js");
 
 const connectDB= require("./config/database.js");
 const User = require("./models/user.js");
 
+const validator = require("validator");
+
+const cookieParser = require("cookie-parser");
+
+const {validateSignUpData} = require("./utils/validation.js");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+const {userAuth} = require("./middlewares/auth.js");
 
 app.use(express.json()); // This line says that I am using express json middleware to parse the incoming request body as JSON
+
+app.use(cookieParser()); //without this method we can't parse the cookie for the validation inside server for the api which will call after doing login
 
 
 //This is the route handler for the signup route. It will save the user data to the database .
@@ -28,9 +39,29 @@ app.post("/signup",async(req,res)=>{
     //     password:"ms@123",
     // });
 
-    const user = new User(req.body);
 
     try{
+
+        console.log("Step 1");
+    //Validation of data when the Api hits through the postman
+    validateSignUpData(req);
+
+    console.log("Step 2");
+    const {firstName, lastName, emailId, password} = req.body;
+
+    console.log("Password:", password);
+
+    //Encrypt the password
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log(passwordHash);
+
+
+    //Creating a new instance of the User model
+    const user = new User({
+        firstName, lastName, emailId, password:passwordHash,
+    });
+
+    
         await user.save();
         res.send("User signed up successfully");
 
@@ -42,7 +73,80 @@ app.post("/signup",async(req,res)=>{
     
 })
 
+app.post("/login", async(req,res)=>{
+    try{
 
+        const {emailId,password} = req.body;
+        //Then I will put the check for emailId
+        // if(!validator.isEmail(emailId)){
+        //     throw new Error("Email is not valid");
+        // }
+
+        const user = await User.findOne({emailId:emailId});
+        if(!user){
+            throw new Error("Invalid Credentials");
+        }
+
+        // const isPasswordValid = await bcrypt.compare(password, user.password); //This user.password is the hash password
+        const isPasswordValid = await user.validatePassword(password);
+        if(isPasswordValid){
+
+            //Create a jwt token
+            const token = await user.getJWT();
+            // const token = await jwt.sign({_id:user._id},"DEV@TinderBE$2015",{ expiresIn: "1d"});
+            console.log(token);
+
+            //Add the token to cookie and sends the response back to the user
+            res.cookie("token",token,{expires:new Date(Date.now()+1*3600000)});
+            res.send("Login successful!!");
+        }else{
+            throw new Error("Invalid Credentials");
+        }
+
+    }catch(err){
+        res.status(400).send("Error:"+ err.message);
+
+    }
+})
+
+app.get("/profile", userAuth, async(req,res)=>{
+
+    try{
+    // //at first I need to validate this cookie
+    // const cookies = req.cookies;
+
+    // const {token} = cookies;
+
+    // if(!token){
+    //     throw new Error("Invalid token");
+    // }
+
+    // //validate my token
+    // const decodedMessage = await jwt.verify(token,"DEV@TinderBE$2015");
+
+    // const {_id}= decodedMessage;
+    // console.log("Logged in user is"+ _id);
+    // // console.log(cookies);
+    // const user = await User.findById(_id);
+    const user = req.user;
+
+    // if(!user){
+    //     throw new Error("User does not exist");
+    // }
+    res.send(user);
+}catch(err){
+    res.status(400).send("Error:"+err.message);
+}
+})
+
+
+app.post("/sendConnectionRequest", userAuth, async(req,res)=>{
+
+    const user = req.user;
+    //Sending a connection request
+    console.log("Sending a connection request");
+    res.send(user.firstName + " send the connection request");
+})
 //This will give the user data based on the email id provided in the request body
 app.get("/user",async(req,res)=>{
     const userEmail = req.body.emailId;

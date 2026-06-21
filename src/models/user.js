@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema({
     firstName:{
@@ -71,6 +73,20 @@ const userSchema = new mongoose.Schema({
     timestamps:true,
 });
 
+userSchema.methods.getJWT = async function(){
+//Don't make this function as an arrow function otherwise you will get an error, and here we are creating the jwt token instead creating inside the app.js file
+    const user = this;
+    const token = await jwt.sign({_id:user._id},"DEV@TinderBE$2015",{ expiresIn: "1d"});
+    return token;
+
+};
+
+userSchema.methods.validatePassword = async function(passwordInputByUser){
+    const user = this;
+    const passwordHash= user.password;
+    const isPasswordValid = await bcrypt.compare(passwordInputByUser,passwordHash);
+    return isPasswordValid;
+}
 const User = mongoose.model("User",userSchema);
 module.exports = User;
 
