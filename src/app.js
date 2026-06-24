@@ -21,211 +21,225 @@ app.use(express.json()); // This line says that I am using express json middlewa
 app.use(cookieParser()); //without this method we can't parse the cookie for the validation inside server for the api which will call after doing login
 
 
+const authRouter = require("./routes/auth.js");
+const profileRouter = require("./routes/profile.js");
+const requestRouter = require("./routes/request.js");
+
+app.use("/",authRouter);
+app.use("/",profileRouter);
+app.use("/",requestRouter);
+
+
+
 //This is the route handler for the signup route. It will save the user data to the database .
-app.post("/signup",async(req,res)=>{
+// app.post("/signup",async(req,res)=>{
 
-    console.log(req.body);
-    // const userObj = {
-    //     firstName:"Debojyoti",
-    //     lastName:"Das",
-    //     emailId:"debojyoti@das.com",
-    //     password:"debojyoti@123",
-    // }
+//     console.log(req.body);
+//     // const userObj = {
+//     //     firstName:"Debojyoti",
+//     //     lastName:"Das",
+//     //     emailId:"debojyoti@das.com",
+//     //     password:"debojyoti@123",
+//     // }
 
-    // const user = new User({
-    //     firstName:"MS",
-    //     lastName:"Dhoni",
-    //     emailId:"ms@dhoni.com",
-    //     password:"ms@123",
-    // });
-
-
-    try{
-
-        console.log("Step 1");
-    //Validation of data when the Api hits through the postman
-    validateSignUpData(req);
-
-    console.log("Step 2");
-    const {firstName, lastName, emailId, password} = req.body;
-
-    console.log("Password:", password);
-
-    //Encrypt the password
-    const passwordHash = await bcrypt.hash(password, 10);
-    console.log(passwordHash);
+//     // const user = new User({
+//     //     firstName:"MS",
+//     //     lastName:"Dhoni",
+//     //     emailId:"ms@dhoni.com",
+//     //     password:"ms@123",
+//     // });
 
 
-    //Creating a new instance of the User model
-    const user = new User({
-        firstName, lastName, emailId, password:passwordHash,
-    });
+//     try{
+
+//         console.log("Step 1");
+//     //Validation of data when the Api hits through the postman
+//     validateSignUpData(req);
+
+//     console.log("Step 2");
+//     const {firstName, lastName, emailId, password} = req.body;
+
+//     console.log("Password:", password);
+
+//     //Encrypt the password
+//     const passwordHash = await bcrypt.hash(password, 10);
+//     console.log(passwordHash);
+
+
+//     //Creating a new instance of the User model
+//     const user = new User({
+//         firstName, lastName, emailId, password:passwordHash,
+//     });
 
     
-        await user.save();
-        res.send("User signed up successfully");
+//         await user.save();
+//         res.send("User signed up successfully");
 
-    }catch(err){
-        console.log("Error while saving user:", err);
-        res.status(500).send("Error occurred while signing up the user: "+err.message);
+//     }catch(err){
+//         console.log("Error while saving user:", err);
+//         res.status(500).send("Error occurred while signing up the user: "+err.message);
 
-    }
+//     }
     
-})
+// })
 
-app.post("/login", async(req,res)=>{
-    try{
+// app.post("/login", async(req,res)=>{
+//     try{
 
-        const {emailId,password} = req.body;
-        //Then I will put the check for emailId
-        // if(!validator.isEmail(emailId)){
-        //     throw new Error("Email is not valid");
-        // }
+//         const {emailId,password} = req.body;
+//         //Then I will put the check for emailId
+//         // if(!validator.isEmail(emailId)){
+//         //     throw new Error("Email is not valid");
+//         // }
 
-        const user = await User.findOne({emailId:emailId});
-        if(!user){
-            throw new Error("Invalid Credentials");
-        }
+//         const user = await User.findOne({emailId:emailId});
+//         if(!user){
+//             throw new Error("Invalid Credentials");
+//         }
 
-        // const isPasswordValid = await bcrypt.compare(password, user.password); //This user.password is the hash password
-        const isPasswordValid = await user.validatePassword(password);
-        if(isPasswordValid){
+//         // const isPasswordValid = await bcrypt.compare(password, user.password); //This user.password is the hash password
+//         const isPasswordValid = await user.validatePassword(password);
+//         if(isPasswordValid){
 
-            //Create a jwt token
-            const token = await user.getJWT();
-            // const token = await jwt.sign({_id:user._id},"DEV@TinderBE$2015",{ expiresIn: "1d"});
-            console.log(token);
+//             //Create a jwt token
+//             const token = await user.getJWT();
+//             // const token = await jwt.sign({_id:user._id},"DEV@TinderBE$2015",{ expiresIn: "1d"});
+//             console.log(token);
 
-            //Add the token to cookie and sends the response back to the user
-            res.cookie("token",token,{expires:new Date(Date.now()+1*3600000)});
-            res.send("Login successful!!");
-        }else{
-            throw new Error("Invalid Credentials");
-        }
+//             //Add the token to cookie and sends the response back to the user
+//             res.cookie("token",token,{expires:new Date(Date.now()+1*3600000)});
+//             res.send("Login successful!!");
+//         }else{
+//             throw new Error("Invalid Credentials");
+//         }
 
-    }catch(err){
-        res.status(400).send("Error:"+ err.message);
+//     }catch(err){
+//         res.status(400).send("Error:"+ err.message);
 
-    }
-})
+//     }
+// })
 
-app.get("/profile", userAuth, async(req,res)=>{
+// app.get("/profile", userAuth, async(req,res)=>{
 
-    try{
-    // //at first I need to validate this cookie
-    // const cookies = req.cookies;
+//     try{
+//     // //at first I need to validate this cookie
+//     // const cookies = req.cookies;
 
-    // const {token} = cookies;
+//     // const {token} = cookies;
 
-    // if(!token){
-    //     throw new Error("Invalid token");
-    // }
+//     // if(!token){
+//     //     throw new Error("Invalid token");
+//     // }
 
-    // //validate my token
-    // const decodedMessage = await jwt.verify(token,"DEV@TinderBE$2015");
+//     // //validate my token
+//     // const decodedMessage = await jwt.verify(token,"DEV@TinderBE$2015");
 
-    // const {_id}= decodedMessage;
-    // console.log("Logged in user is"+ _id);
-    // // console.log(cookies);
-    // const user = await User.findById(_id);
-    const user = req.user;
+//     // const {_id}= decodedMessage;
+//     // console.log("Logged in user is"+ _id);
+//     // // console.log(cookies);
+//     // const user = await User.findById(_id);
+//     const user = req.user;
 
-    // if(!user){
-    //     throw new Error("User does not exist");
-    // }
-    res.send(user);
-}catch(err){
-    res.status(400).send("Error:"+err.message);
-}
-})
+//     // if(!user){
+//     //     throw new Error("User does not exist");
+//     // }
+//     res.send(user);
+// }catch(err){
+//     res.status(400).send("Error:"+err.message);
+// }
+// })
 
 
-app.post("/sendConnectionRequest", userAuth, async(req,res)=>{
+// app.post("/sendConnectionRequest", userAuth, async(req,res)=>{
 
-    const user = req.user;
-    //Sending a connection request
-    console.log("Sending a connection request");
-    res.send(user.firstName + " send the connection request");
-})
+//     const user = req.user;
+//     //Sending a connection request
+//     console.log("Sending a connection request");
+//     res.send(user.firstName + " send the connection request");
+// })
+
+
+
+
 //This will give the user data based on the email id provided in the request body
-app.get("/user",async(req,res)=>{
-    const userEmail = req.body.emailId;
-    try{
-        const users = await User.find({emailId:userEmail});
-        if(users.length ===0){
-            return res.status(404).send("User not found")
-        }else{
-            res.send(users);
+// app.get("/user",async(req,res)=>{
+//     const userEmail = req.body.emailId;
+//     try{
+//         const users = await User.find({emailId:userEmail});
+//         if(users.length ===0){
+//             return res.status(404).send("User not found")
+//         }else{
+//             res.send(users);
 
-        }
+//         }
         
-    }
-    catch(err){
-        res.status(400).send("Something went wrong")
-    }
-})
+//     }
+//     catch(err){
+//         res.status(400).send("Something went wrong")
+//     }
+// })
 
 
 //This will give the data of all the users in the database
-app.get("/feed",async(req,res) =>{
-    try{
-        const users = await User.find({});
-        res.send(users);
+// app.get("/feed",async(req,res) =>{
+//     try{
+//         const users = await User.find({});
+//         res.send(users);
 
-    }catch(err){
-        res.status(400).send("Something went wrong");
+//     }catch(err){
+//         res.status(400).send("Something went wrong");
 
-    }
-})
+//     }
+// })
 
 
 
 //Now we will see how do we delete a user from the database
-app.delete("/user",async(req,res)=>{
-    const userId = req.body.userId;
-    try{
-        const user = await User.findByIdAndDelete({_id:userId});
-        if(!user){
-            return res.status(404).send("User not found");
-        }else{
-            res.send("User deleted successfully");
-        }
+// app.delete("/user",async(req,res)=>{
+//     const userId = req.body.userId;
+//     try{
+//         const user = await User.findByIdAndDelete({_id:userId});
+//         if(!user){
+//             return res.status(404).send("User not found");
+//         }else{
+//             res.send("User deleted successfully");
+//         }
 
-    }
-    catch(err){
-        res.status(400).send("Something went wrong");
-    }
-})
+//     }
+//     catch(err){
+//         res.status(400).send("Something went wrong");
+//     }
+// })
 
 
 
 //Update the data of the user in the database
-app.patch("/user/:userId",async(req,res)=>{
-    const userId = req.params?.userId;
-    const data = req.body;
+// app.patch("/user/:userId",async(req,res)=>{
+//     const userId = req.params?.userId;
+//     const data = req.body;
 
     
-    try{
+//     try{
 
-        const ALLOWED_UPDATES = ["photoUrl","about","gender","age","skills"];
+//         const ALLOWED_UPDATES = ["photoUrl","about","gender","age","skills"];
 
-    const isUpdateAllowed = Object.keys(data).every(k=>ALLOWED_UPDATES.includes(k));
-    if(!isUpdateAllowed){
-        throw new Error("Update not allowed");
-    }
+//     const isUpdateAllowed = Object.keys(data).every(k=>ALLOWED_UPDATES.includes(k));
+//     if(!isUpdateAllowed){
+//         throw new Error("Update not allowed");
+//     }
 
-    if(data?.skills.length>10){
-        throw new Error("Skills cannot be more than 10");
-    }
-       const user= await User.findByIdAndUpdate({_id:userId},data,{returnDocument:"before",runValidators:true,});
-       console.log("User data before update:", user);
-        res.send("User data updated successfully");
+//     if(data?.skills.length>10){
+//         throw new Error("Skills cannot be more than 10");
+//     }
+//        const user= await User.findByIdAndUpdate({_id:userId},data,{returnDocument:"before",runValidators:true,});
+//        console.log("User data before update:", user);
+//         res.send("User data updated successfully");
 
-    }catch(err){
-        res.status(400).send("Something went wrong:"+ err.message);
+//     }catch(err){
+//         res.status(400).send("Something went wrong:"+ err.message);
 
-    }
-})
+//     }
+// })
 
 
 
