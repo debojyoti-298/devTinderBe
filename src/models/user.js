@@ -67,12 +67,22 @@ const userSchema = new mongoose.Schema({
     },
     skills:{
         type:[String]
-    }
+    },
+//     resetToken: {
+//     type: String,
+//     default: null
+// },
+// resetTokenExpiry: {
+//     type: Date,
+//     default: null
+// }
 },
 {
     timestamps:true,
 });
 
+
+//Inside schema there is an object present named "methods"
 userSchema.methods.getJWT = async function(){
 //Don't make this function as an arrow function otherwise you will get an error, and here we are creating the jwt token instead creating inside the app.js file
     const user = this;
