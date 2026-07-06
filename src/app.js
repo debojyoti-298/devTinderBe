@@ -10,11 +10,18 @@ const validator = require("validator");
 
 const cookieParser = require("cookie-parser");
 
+const cors = require("cors");
+
 const {validateSignUpData} = require("./utils/validation.js");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const {userAuth} = require("./middlewares/auth.js");
+
+app.use(cors({
+    origin: "http://localhost:5173", //This line says that I am allowing cross origin requests from the frontend application which is running on port 5173
+    credentials: true,
+})); //This line says that I am using cors middleware to allow cross origin requests from the frontend application
 
 app.use(express.json()); // This line says that I am using express json middleware to parse the incoming request body as JSON
 
@@ -24,10 +31,12 @@ app.use(cookieParser()); //without this method we can't parse the cookie for the
 const authRouter = require("./routes/auth.js");
 const profileRouter = require("./routes/profile.js");
 const requestRouter = require("./routes/request.js");
+const userRouter = require("./routes/user.js");
 
 app.use("/",authRouter);
 app.use("/",profileRouter);
 app.use("/",requestRouter);
+app.use("/",userRouter);
 
 
 

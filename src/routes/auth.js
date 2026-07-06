@@ -46,8 +46,19 @@ authRouter.post("/signup",async(req,res)=>{
     });
 
     
-        await user.save();
-        res.send("User signed up successfully");
+        const savedUser = await user.save();
+
+         //Create a jwt token
+            const token = await savedUser.getJWT();
+            // const token = await jwt.sign({_id:user._id},"DEV@TinderBE$2015",{ expiresIn: "1d"});
+            console.log(token);
+
+            //Add the token to cookie and sends the response back to the user
+            res.cookie("token",token,{expires:new Date(Date.now()+1*3600000)});
+            // res.send("Login successful!!");
+
+
+        res.json({message : "User signed up successfully", data: savedUser});
 
     }catch(err){
         console.log("Error while saving user:", err);
@@ -82,7 +93,8 @@ authRouter.post("/login", async(req,res)=>{
 
             //Add the token to cookie and sends the response back to the user
             res.cookie("token",token,{expires:new Date(Date.now()+1*3600000)});
-            res.send("Login successful!!");
+            // res.send("Login successful!!");
+            res.send(user);
         }else{
             throw new Error("Invalid Credentials");
         }
