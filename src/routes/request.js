@@ -7,6 +7,8 @@ const ConnectionRequest = require("../models/connectionRequest.js");
 
 const User = require("../models/user.js");
 
+const sendEmail = require("../utils/sendEmail.js");
+
 requestRouter.post("/request/send/:status/:toUserId", userAuth, async(req,res)=>{
 
     //Here as "userAuth" is present that means user is already logged in
@@ -34,7 +36,7 @@ requestRouter.post("/request/send/:status/:toUserId", userAuth, async(req,res)=>
 
         const toUser = await User.findById(toUserId);
         if(!toUser){
-            res.status(404).json({message:"User not found",})
+            return res.status(404).json({message:"User not found"});
         }
 
         const connectionRequest = new ConnectionRequest({
@@ -42,6 +44,13 @@ requestRouter.post("/request/send/:status/:toUserId", userAuth, async(req,res)=>
         });
 
         const data = await connectionRequest.save();
+
+        const emailRes = await sendEmail.run(toUser.emailId, "A new friend request from" + req.user.firstName, req.user.firstName + " is " + status + " in " + toUser.firstName, data);
+        console.log(emailRes);
+
+
+        // const emailRes = await sendEmail.run("A new friend request from" + req.user.firstName, req.user.firstName + " is " + status + " in " + toUser.firstName, data);
+        // console.log(emailRes);
 
         res.json({message:req.user.firstName + " is " + status + " in " + toUser.firstName, data})
 

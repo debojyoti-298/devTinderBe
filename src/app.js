@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const app = express(); // This line says that I am creating a new express js application
 
@@ -255,7 +257,7 @@ app.use("/",userRouter);
 connectDB()
 .then(()=>{
     console.log("Database connected successfully");
-    app.listen(7777, ()=>{
+    app.listen(process.env.PORT, ()=>{
     console.log("Server is successfully running on port 7777")
 });
 })
